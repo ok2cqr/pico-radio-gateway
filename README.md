@@ -112,3 +112,8 @@ These two files were especially useful during early bring-up because they separa
 ## Schematic
 
 ![Pico Radio Gateway schematic](pico-radio-gateway-schematic.png)
+
+## Licence
+MIT
+
+Most of the implementation and documentation work for this project was done with OpenAI Codex.
