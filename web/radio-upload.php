@@ -1,4 +1,6 @@
 <?php
+declare(strict_types=1);
+
 header('Content-Type: application/json; charset=utf-8');
 
 $apiKey = 'change-me';
@@ -24,21 +26,54 @@ if ($authHeader !== $expectedAuth) {
 }
 
 $rawBody = file_get_contents('php://input');
-$data = json_decode($rawBody, true);
+if ($rawBody === false) {
+    http_response_code(400);
+    echo json_encode(['error' => 'read_failed']);
+    exit;
+}
 
-if (!is_array($data)) {
+try {
+    $payload = json_decode($rawBody, false, 512, JSON_THROW_ON_ERROR);
+} catch (JsonException $e) {
+    error_log('radio-upload invalid JSON: '.$e->getMessage());
     http_response_code(400);
     echo json_encode(['error' => 'invalid_json']);
     exit;
 }
 
-if (!array_key_exists('freq', $data) || !array_key_exists('mode', $data)) {
+if (!$payload instanceof stdClass) {
+    error_log('radio-upload rejected non-object payload: '.$rawBody);
+    http_response_code(400);
+    echo json_encode(['error' => 'invalid_payload_shape']);
+    exit;
+}
+
+if (!property_exists($payload, 'freq') || !property_exists($payload, 'mode')) {
     http_response_code(400);
     echo json_encode(['error' => 'missing_fields']);
     exit;
 }
 
+$data = [
+    'freq' => (string) $payload->freq,
+    'mode' => (string) $payload->mode,
+];
 $data['last_seen'] = time();
 
-file_put_contents(__DIR__.'/radio.json', json_encode($data));
+try {
+    $json = json_encode($data, JSON_THROW_ON_ERROR);
+} catch (JsonException $e) {
+    error_log('radio-upload encode failed: '.$e->getMessage());
+    http_response_code(500);
+    echo json_encode(['error' => 'encode_failed']);
+    exit;
+}
+
+if (file_put_contents(__DIR__.'/radio.json', $json, LOCK_EX) === false) {
+    error_log('radio-upload write failed for '.__DIR__.'/radio.json');
+    http_response_code(500);
+    echo json_encode(['error' => 'write_failed']);
+    exit;
+}
+
 echo json_encode(['status' => 'ok']);
