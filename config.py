@@ -3,8 +3,8 @@ KNOWN_WIFIS = [
     {"ssid": "SSID2", "password": "7654321"},
 ]
 
-HTTP_BASE_URL = "https://ok2cqr.com/radio-upload.php"
-HTTP_FALLBACK_URL = "http://ok2cqr.com/radio-upload.php"
+HTTP_BASE_URL = "https://example.com/radio-upload.php"
+HTTP_FALLBACK_URL = "http://example.com/radio-upload.php"
 HTTP_API_KEY = "change-me"
 
 UART_ID = 0
